@@ -11,11 +11,8 @@ use actix_web::Result;
 use futures_util::future::{self, FutureExt as _, LocalBoxFuture};
 use oso::Oso;
 
-pub mod errors;
-
 pub struct OsoAuthorization<F> {
     pub authorize_fn: Arc<F>,
-    // oso: Arc<Oso>,
 }
 
 impl<F, O> OsoAuthorization<F>
@@ -26,7 +23,6 @@ impl<F, O> OsoAuthorization<F>
     pub fn with_fn(authorize_fn: F) -> OsoAuthorization<F> {
         OsoAuthorization {
             authorize_fn: Arc::new(authorize_fn),
-            // oso: Arc::new(Oso::new()),
         }
     }
 }
