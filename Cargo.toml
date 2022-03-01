@@ -1,0 +1,21 @@
+[package]
+name = "actix-web-oso"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "actix_web_oso"
+path = "src/lib.rs"
+
+[dependencies]
+actix-web = { version = "4.0.1", default_features = false }
+actix-service = "2"
+actix-utils = "3"
+futures-util = { version = "0.3.7", default-features = false, features = ["std"] }
+futures-core = { version = "0.3.7", default-features = false }
+oso = "0.26.0"
+
+[dev-dependencies]
+actix-rt = "2"
+actix-web = { version = "4", default_features = false, features = ["macros"] }
+anyhow = "1.0.55"
