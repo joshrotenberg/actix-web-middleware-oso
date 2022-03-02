@@ -73,7 +73,7 @@ where
         let service = Rc::clone(&self.service);
 
         async move {
-            let oso = req.app_data::<Oso>().map(|o| o.clone());
+            let oso = req.app_data::<Oso>().cloned();
             if oso.is_none() {
                 return Err(actix_web::error::ErrorUnauthorized("No Oso available"));
             }
