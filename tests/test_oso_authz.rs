@@ -1,7 +1,7 @@
 use actix_web::{test, web, App, HttpResponse, Responder};
 use oso::{Oso, PolarClass};
 
-use actix_web_oso::OsoAuthorization;
+use actix_web_middleware_oso::OsoAuthorization;
 
 async fn hello() -> impl Responder {
     HttpResponse::Ok().body("Hello world!")
@@ -90,7 +90,7 @@ async fn test_missing_oso() {
         if oso
             .is_allowed(
                 User {
-                    name: "lice".to_string(),
+                    name: "alice".to_string(),
                 },
                 "action",
                 "resource",
