@@ -1,6 +1,12 @@
 [package]
 name = "actix-web-middleware-oso"
+description = "actix-web authorization middleware with Oso"
+authors = ["josh rotenberg <joshrotenberg@gmail.com>"]
+license = "MIT/Apache-2.0"
 version = "0.1.0"
+readme = "README.md"
+documentation = "https://docs.rs/actix-web-middleware-oso"
+repository = "https://github.com/joshrotenberg/actix-web-middleware-oso.git"
 edition = "2021"
 
 [lib]
