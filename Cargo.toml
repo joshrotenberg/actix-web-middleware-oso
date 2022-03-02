@@ -1,10 +1,10 @@
 [package]
-name = "actix-web-oso"
+name = "actix-web-middleware-oso"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "actix_web_oso"
+name = "actix_web_middleware_oso"
 path = "src/lib.rs"
 
 [dependencies]
