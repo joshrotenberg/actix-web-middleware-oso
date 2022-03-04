@@ -1,5 +1,5 @@
-use actix_web::{App, Error, HttpServer, middleware, web};
 use actix_web::dev::ServiceRequest;
+use actix_web::{middleware, web, App, Error, HttpServer};
 use oso::{Oso, PolarClass};
 
 use actix_web_middleware_oso::OsoAuthorization;
@@ -25,7 +25,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(authz)
             .service(web::resource("/").to(|| async { "Test\r\n" }))
     })
-        .bind("127.0.0.1:8080")?
-        .run()
-        .await
+    .bind("127.0.0.1:8080")?
+    .run()
+    .await
 }

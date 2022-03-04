@@ -1,4 +1,4 @@
-use actix_web::{App, HttpResponse, Responder, test, web};
+use actix_web::{test, web, App, HttpResponse, Responder};
 use oso::{Oso, PolarClass};
 
 use actix_web_middleware_oso::OsoAuthorization;
@@ -36,12 +36,7 @@ async fn test_oso_authz_success() {
             Err(actix_web::error::ErrorUnauthorized("no sir"))
         }
     });
-    let app = test::init_service(
-        App::new()
-            .wrap(authz)
-            .route("/", web::get().to(hello)),
-    )
-        .await;
+    let app = test::init_service(App::new().wrap(authz).route("/", web::get().to(hello))).await;
     let req = test::TestRequest::default().to_request();
     let resp = test::call_service(&app, req).await;
     assert!(resp.status().is_success());
@@ -71,12 +66,7 @@ async fn test_oso_authz_failure() {
             Err(actix_web::error::ErrorUnauthorized("no sir"))
         }
     });
-    let app = test::init_service(
-        App::new()
-            .wrap(authz)
-            .route("/", web::get().to(hello)),
-    )
-        .await;
+    let app = test::init_service(App::new().wrap(authz).route("/", web::get().to(hello))).await;
     let req = test::TestRequest::default().to_request();
     test::call_service(&app, req).await;
 }
