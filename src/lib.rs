@@ -13,8 +13,8 @@ use futures_util::future::{self, FutureExt as _, LocalBoxFuture};
 use oso::Oso;
 
 pub struct OsoAuthorization<F> {
-    pub authorize_fn: Arc<F>,
     pub oso: Arc<Oso>,
+    pub authorize_fn: Arc<F>,
 }
 
 impl<F, O> OsoAuthorization<F>
@@ -22,10 +22,10 @@ where
     F: Fn(ServiceRequest, Oso) -> O,
     O: Future<Output = Result<ServiceRequest, Error>>,
 {
-    pub fn with_fn(oso: Oso, authorize_fn: F) -> OsoAuthorization<F> {
+    pub fn new(oso: Oso, authorize_fn: F) -> OsoAuthorization<F> {
         OsoAuthorization {
-            authorize_fn: Arc::new(authorize_fn),
             oso: Arc::new(oso),
+            authorize_fn: Arc::new(authorize_fn),
         }
     }
 }
@@ -47,16 +47,16 @@ where
     fn new_transform(&self, service: S) -> Self::Future {
         future::ok(OsoAuthorizationMiddleware {
             service: Rc::new(service),
-            authorize_fn: self.authorize_fn.clone(),
             oso: self.oso.clone(), // Rc::new(Oso::new()),
+            authorize_fn: self.authorize_fn.clone(),
         })
     }
 }
 
 pub struct OsoAuthorizationMiddleware<S, F> {
     service: Rc<S>,
-    authorize_fn: Arc<F>,
     oso: Arc<Oso>,
+    authorize_fn: Arc<F>,
 }
 
 impl<S, B, F, O> Service<ServiceRequest> for OsoAuthorizationMiddleware<S, F>

@@ -20,25 +20,21 @@ async fn test_oso_authz_success() {
     o.load_str(r#"allow(actor, _action, _resource) if actor matches User{name: "alice"};"#)
         .unwrap();
 
-    let authz = OsoAuthorization::with_fn(o, |req, oso| async move {
-        if oso
-            .is_allowed(
-                User {
-                    name: "alice".to_string(),
-                },
-                "action",
-                "resource",
-            )
-            .unwrap()
-        {
+    let authz = OsoAuthorization::new(o, |req, oso| async move {
+        let user = User {
+            name: "alice".to_string(),
+        };
+        if oso.is_allowed(user, "action", "resource").unwrap() {
             Ok(req)
         } else {
             Err(actix_web::error::ErrorUnauthorized("no sir"))
         }
     });
+
     let app = test::init_service(App::new().wrap(authz).route("/", web::get().to(hello))).await;
     let req = test::TestRequest::default().to_request();
     let resp = test::call_service(&app, req).await;
+
     assert!(resp.status().is_success());
 }
 
@@ -50,11 +46,11 @@ async fn test_oso_authz_failure() {
     o.load_str(r#"allow(actor, _action, _resource) if actor matches User{name: "alice"};"#)
         .unwrap();
 
-    let authz = OsoAuthorization::with_fn(o, |req, oso| async move {
+    let authz = OsoAuthorization::new(o, |req, oso| async move {
         if oso
             .is_allowed(
                 User {
-                    name: "lice".to_string(),
+                    name: "not alice".to_string(),
                 },
                 "action",
                 "resource",
@@ -66,7 +62,9 @@ async fn test_oso_authz_failure() {
             Err(actix_web::error::ErrorUnauthorized("no sir"))
         }
     });
+
     let app = test::init_service(App::new().wrap(authz).route("/", web::get().to(hello))).await;
     let req = test::TestRequest::default().to_request();
+
     test::call_service(&app, req).await;
 }
