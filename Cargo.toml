@@ -22,4 +22,5 @@ oso = "0.26.0"
 [dev-dependencies]
 actix-rt = "2"
 actix-web = { version = "4", default_features = false, features = ["macros"] }
-anyhow = "1.0.55"
+env_logger = "0.9"
+log = "0.4"
