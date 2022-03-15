@@ -1,8 +1,6 @@
-use actix_web::{
-    App, Error, HttpResponse, HttpServer, middleware, web,
-};
 use actix_web::dev::ServiceRequest;
 use actix_web::error::ErrorUnauthorized;
+use actix_web::{middleware, web, App, Error, HttpResponse, HttpServer};
 use oso::Oso;
 
 use actix_web_middleware_oso::OsoAuthorization;
