@@ -5,7 +5,7 @@ use actix_web::{
 };
 use oso::Oso;
 
-use actix_web_middleware_oso::{ExtractedOso, OsoAuthorization};
+use actix_web_middleware_oso::{extractor::ExtractedOso, middleware::OsoAuthorization};
 
 async fn authorize(req: ServiceRequest, oso: Oso) -> Result<ServiceRequest, Error> {
     let action = req.method().to_string().to_uppercase();
