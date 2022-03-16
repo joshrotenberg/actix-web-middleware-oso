@@ -1,6 +1,8 @@
-use actix_web::{App, Error, get, HttpRequest, HttpResponse, HttpServer, middleware, Responder, web};
 use actix_web::dev::ServiceRequest;
 use actix_web::error::ErrorUnauthorized;
+use actix_web::{
+    get, middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder,
+};
 use oso::Oso;
 
 use actix_web_middleware_oso::{ExtractedOso, OsoAuthorization};
@@ -9,7 +11,11 @@ async fn authorize(req: ServiceRequest, oso: Oso) -> Result<ServiceRequest, Erro
     let action = req.method().to_string().to_uppercase();
     let resource = req.path();
 
-    log::info!("checking access to {} with {} in middleware", resource, action);
+    log::info!(
+        "checking access to {} with {} in middleware",
+        resource,
+        action
+    );
 
     match oso.is_allowed("_actor", action, resource) {
         Ok(true) => Ok(req),
@@ -36,8 +42,10 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         let mut oso = Oso::new();
-        oso.load_str(r#"allow(_actor, action, resource) if action = "GET" and resource.starts_with("/ok");"#)
-            .unwrap();
+        oso.load_str(
+            r#"allow(_actor, action, resource) if action = "GET" and resource.starts_with("/ok");"#,
+        )
+        .unwrap();
 
         let authz = OsoAuthorization::new(oso, authorize);
         App::new()
@@ -46,7 +54,7 @@ async fn main() -> std::io::Result<()> {
             .service(index)
             .default_service(web::to(|| HttpResponse::Ok()))
     })
-        .bind("127.0.0.1:8080")?
-        .run()
-        .await
+    .bind("127.0.0.1:8080")?
+    .run()
+    .await
 }
