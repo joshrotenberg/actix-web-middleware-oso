@@ -18,7 +18,8 @@ async fn authorize(req: ServiceRequest, oso: Oso) -> Result<ServiceRequest, Erro
 }
 
 #[get("/extract")]
-async fn index(_oso: ExtractedOso) -> impl Responder {
+async fn index(oso: ExtractedOso) -> impl Responder {
+    oso.is_allowed("foo", "bar", "baz");
     "Use oso here"
 }
 

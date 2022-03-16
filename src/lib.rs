@@ -119,6 +119,13 @@ where
 #[derive(Clone)]
 pub struct ExtractedOso(Oso);
 
+impl Deref for ExtractedOso {
+    type Target = Oso;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl FromRequest for ExtractedOso {
     type Error = Error;
     type Future = Ready<Result<Self, Error>>;
