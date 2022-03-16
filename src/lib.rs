@@ -1,6 +1,5 @@
 //! Oso Authorization middleware
 
-use std::borrow::Borrow;
 use std::ops::Deref;
 use std::{future::Future, rc::Rc, sync::Arc};
 
@@ -14,6 +13,7 @@ use actix_web::{
 };
 use futures_util::future::{self, FutureExt as _, LocalBoxFuture};
 use oso::Oso;
+use std::borrow::Borrow;
 
 /// Middleware for Oso authorization
 pub struct OsoAuthorization<F> {
@@ -131,7 +131,6 @@ impl FromRequest for ExtractedOso {
     type Future = Ready<Result<Self, Error>>;
 
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
-        dbg!(req.extensions().contains::<ExtractedOso>());
         if let Some(oso) = req.extensions().get::<ExtractedOso>() {
             ready(Ok(oso.borrow().clone()))
         } else {
