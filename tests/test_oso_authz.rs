@@ -1,7 +1,7 @@
 use actix_web::{test, web, App, HttpResponse, Responder};
 use oso::{Oso, PolarClass};
 
-use actix_web_middleware_oso::OsoAuthorization;
+use actix_web_middleware_oso::middleware::OsoAuthorization;
 
 async fn hello() -> impl Responder {
     HttpResponse::Ok().body("Hello world!")
