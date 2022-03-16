@@ -1,6 +1,6 @@
+use actix_web::{App, Error, get, HttpRequest, HttpResponse, HttpServer, middleware, Responder, web};
 use actix_web::dev::ServiceRequest;
 use actix_web::error::ErrorUnauthorized;
-use actix_web::{get, middleware, web, App, Error, HttpResponse, HttpServer, Responder};
 use oso::Oso;
 
 use actix_web_middleware_oso::{ExtractedOso, OsoAuthorization};
@@ -9,7 +9,7 @@ async fn authorize(req: ServiceRequest, oso: Oso) -> Result<ServiceRequest, Erro
     let action = req.method().to_string().to_uppercase();
     let resource = req.path();
 
-    log::info!("checking access to {} with {}", resource, action);
+    log::info!("checking access to {} with {} in middleware", resource, action);
 
     match oso.is_allowed("_actor", action, resource) {
         Ok(true) => Ok(req),
@@ -17,10 +17,17 @@ async fn authorize(req: ServiceRequest, oso: Oso) -> Result<ServiceRequest, Erro
     }
 }
 
-#[get("/extract")]
-async fn index(oso: ExtractedOso) -> impl Responder {
-    oso.is_allowed("foo", "bar", "baz");
-    "Use oso here"
+#[get("/ok/extract")]
+async fn index(oso: ExtractedOso, req: HttpRequest) -> impl Responder {
+    let action = req.method().to_string().to_uppercase();
+    let resource = req.path();
+
+    log::info!("checking access to {} with {} in handler", resource, action);
+
+    match oso.is_allowed("_actor", action, resource) {
+        Ok(true) => HttpResponse::Ok().body("yay!"),
+        _ => HttpResponse::Unauthorized().body("no!"),
+    }
 }
 
 #[actix_web::main]
@@ -29,7 +36,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         let mut oso = Oso::new();
-        oso.load_str(r#"allow(_actor, action, resource) if action = "GET" and resource.starts_with("/ok/");"#)
+        oso.load_str(r#"allow(_actor, action, resource) if action = "GET" and resource.starts_with("/ok");"#)
             .unwrap();
 
         let authz = OsoAuthorization::new(oso, authorize);
