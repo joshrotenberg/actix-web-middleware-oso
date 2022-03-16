@@ -3,10 +3,11 @@
 use std::{future::Future, rc::Rc, sync::Arc};
 use std::ops::Deref;
 
+use actix_utils::future::{ready, Ready};
 use actix_web::{
     body::{EitherBody, MessageBody},
-    dev::{Service, ServiceRequest, ServiceResponse, Transform},
-    Error,
+    dev::{Payload, Service, ServiceRequest, ServiceResponse, Transform},
+    Error, FromRequest, HttpMessage, HttpRequest,
 };
 use actix_web::Result;
 use futures_util::future::{self, FutureExt as _, LocalBoxFuture};
@@ -108,6 +109,17 @@ impl<S, B, F, O> Service<ServiceRequest> for OsoAuthorizationMiddleware<S, F>
             service.call(req).await.map(|res| res.map_into_left_body())
         }
             .boxed_local()
+    }
+}
+
+pub struct ExtractedOso(Oso);
+
+impl FromRequest for ExtractedOso {
+    type Error = Error;
+    type Future = Ready<Result<Self, Error>>;
+
+    fn from_request(_req: &HttpRequest, _: &mut Payload) -> Self::Future {
+        ready(Ok(ExtractedOso(Oso::new())))
     }
 }
 

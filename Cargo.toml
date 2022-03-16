@@ -15,6 +15,7 @@ path = "src/lib.rs"
 
 [dependencies]
 actix-web = { version = "4.0.1", default_features = false }
+actix-utils = "3"
 actix-service = "2"
 futures-util = { version = "0.3.7", default-features = false, features = ["std"] }
 oso = "0.26.0"
