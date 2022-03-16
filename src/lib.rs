@@ -1,17 +1,17 @@
 //! Oso Authorization middleware
 
+use std::{future::Future, rc::Rc, sync::Arc};
 use std::borrow::Borrow;
 use std::ops::Deref;
-use std::{future::Future, rc::Rc, sync::Arc};
 
-use actix_utils::future::{err, ready, Ready};
-use actix_web::error::ErrorBadRequest;
-use actix_web::Result;
+use actix_utils::future::{ready, Ready};
 use actix_web::{
     body::{EitherBody, MessageBody},
     dev::{Payload, Service, ServiceRequest, ServiceResponse, Transform},
     Error, FromRequest, HttpMessage, HttpRequest,
 };
+use actix_web::error::ErrorBadRequest;
+use actix_web::Result;
 use futures_util::future::{self, FutureExt as _, LocalBoxFuture};
 use oso::Oso;
 
@@ -22,9 +22,9 @@ pub struct OsoAuthorization<F> {
 }
 
 impl<F, O> OsoAuthorization<F>
-where
-    F: Fn(ServiceRequest, Oso) -> O,
-    O: Future<Output = Result<ServiceRequest, Error>>,
+    where
+        F: Fn(ServiceRequest, Oso) -> O,
+        O: Future<Output=Result<ServiceRequest, Error>>,
 {
     /// Create a new `OsoAuthorization`, passing in an initialized handle to Oso and a callback.
     /// `authorize_fn` will be called with the `ServiceRequest` and `Oso`.
@@ -59,12 +59,12 @@ where
 }
 
 impl<S, B, F, O> Transform<S, ServiceRequest> for OsoAuthorization<F>
-where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
-    S::Future: 'static,
-    F: Fn(ServiceRequest, Oso) -> O + 'static,
-    O: Future<Output = Result<ServiceRequest, Error>> + 'static,
-    B: MessageBody + 'static,
+    where
+        S: Service<ServiceRequest, Response=ServiceResponse<B>, Error=Error> + 'static,
+        S::Future: 'static,
+        F: Fn(ServiceRequest, Oso) -> O + 'static,
+        O: Future<Output=Result<ServiceRequest, Error>> + 'static,
+        B: MessageBody + 'static,
 {
     type Response = ServiceResponse<EitherBody<B>>;
     type Error = Error;
@@ -88,12 +88,12 @@ pub struct OsoAuthorizationMiddleware<S, F> {
 }
 
 impl<S, B, F, O> Service<ServiceRequest> for OsoAuthorizationMiddleware<S, F>
-where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
-    F: Fn(ServiceRequest, Oso) -> O + 'static,
-    O: Future<Output = Result<ServiceRequest, Error>> + 'static,
-    S::Future: 'static,
-    B: MessageBody + 'static,
+    where
+        S: Service<ServiceRequest, Response=ServiceResponse<B>, Error=Error> + 'static,
+        F: Fn(ServiceRequest, Oso) -> O + 'static,
+        O: Future<Output=Result<ServiceRequest, Error>> + 'static,
+        S::Future: 'static,
+        B: MessageBody + 'static,
 {
     type Response = ServiceResponse<EitherBody<B>>;
     type Error = Error;
@@ -112,7 +112,7 @@ where
             let req = authorize_fn(req, oso.deref().clone()).await?;
             service.call(req).await.map(|res| res.map_into_left_body())
         }
-        .boxed_local()
+            .boxed_local()
     }
 }
 
@@ -143,8 +143,8 @@ impl FromRequest for ExtractedOso {
 #[cfg(test)]
 mod tests {
     use actix_service::{into_service, Service};
-    use actix_web::test::TestRequest;
     use actix_web::{error, HttpResponse};
+    use actix_web::test::TestRequest;
 
     use super::*;
 
