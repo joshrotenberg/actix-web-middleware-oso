@@ -1,9 +1,9 @@
 use actix_web::dev::ServiceRequest;
 use actix_web::error::ErrorUnauthorized;
-use actix_web::{middleware, web, App, Error, HttpResponse, HttpServer};
+use actix_web::{get, middleware, web, App, Error, HttpResponse, HttpServer, Responder};
 use oso::Oso;
 
-use actix_web_middleware_oso::OsoAuthorization;
+use actix_web_middleware_oso::{ExtractedOso, OsoAuthorization};
 
 async fn authorize(req: ServiceRequest, oso: Oso) -> Result<ServiceRequest, Error> {
     let action = req.method().to_string().to_uppercase();
@@ -15,6 +15,11 @@ async fn authorize(req: ServiceRequest, oso: Oso) -> Result<ServiceRequest, Erro
         Ok(true) => Ok(req),
         _ => Err(ErrorUnauthorized("not allowed")),
     }
+}
+
+#[get("/extract")]
+async fn index(_oso: ExtractedOso) -> impl Responder {
+    "Use oso here"
 }
 
 #[actix_web::main]
@@ -30,6 +35,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(middleware::Logger::default())
             .wrap(authz)
+            .service(index)
             .default_service(web::to(|| HttpResponse::Ok()))
     })
         .bind("127.0.0.1:8080")?
