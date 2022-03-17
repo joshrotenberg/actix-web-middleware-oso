@@ -4,9 +4,9 @@ use std::borrow::Borrow;
 use std::ops::Deref;
 
 use actix_utils::future::{ready, Ready};
-use actix_web::{dev::Payload, Error, FromRequest, HttpMessage, HttpRequest};
 use actix_web::error::ErrorBadRequest;
 use actix_web::Result;
+use actix_web::{dev::Payload, Error, FromRequest, HttpMessage, HttpRequest};
 use oso::Oso;
 
 /// Extractor to make Oso available to handlers.
