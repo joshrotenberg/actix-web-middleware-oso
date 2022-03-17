@@ -1,5 +1,4 @@
 use actix_web::{test, web, App, HttpResponse, Responder};
-use oso::PolarClass;
 
 use actix_web_middleware_oso::middleware::OsoAuthorization;
 
