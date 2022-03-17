@@ -104,7 +104,6 @@ where
 
         async move {
             let eo = crate::extractor::ExtractedOso(oso.deref().clone());
-            req.app_data().insert(&eo);
             req.extensions_mut().insert(eo);
             let req = authorize_fn(req, oso.deref().clone()).await?;
             service.call(req).await.map(|res| res.map_into_left_body())
