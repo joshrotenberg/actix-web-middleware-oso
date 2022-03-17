@@ -1,27 +1,19 @@
 use actix_web::{test, web, App, HttpResponse, Responder};
-use oso::{Oso, PolarClass};
+use oso::PolarClass;
 
 use actix_web_middleware_oso::middleware::OsoAuthorization;
+
+mod common;
 
 async fn hello() -> impl Responder {
     HttpResponse::Ok().body("Hello world!")
 }
 
-#[derive(Debug, PolarClass)]
-struct User {
-    #[polar(attribute)]
-    name: String,
-}
-
 #[actix_web::test]
 async fn test_oso_authz_success() {
-    let mut o = Oso::new();
-    o.register_class(User::get_polar_class()).unwrap();
-    o.load_str(r#"allow(actor, _action, _resource) if actor matches User{name: "alice"};"#)
-        .unwrap();
-
+    let o = common::init_oso();
     let authz = OsoAuthorization::new(o, |req, oso| async move {
-        let user = User {
+        let user = common::User {
             name: "alice".to_string(),
         };
         if oso.is_allowed(user, "action", "resource").unwrap() {
@@ -41,15 +33,11 @@ async fn test_oso_authz_success() {
 #[actix_web::test]
 #[should_panic]
 async fn test_oso_authz_failure() {
-    let mut o = Oso::new();
-    o.register_class(User::get_polar_class()).unwrap();
-    o.load_str(r#"allow(actor, _action, _resource) if actor matches User{name: "alice"};"#)
-        .unwrap();
-
+    let o = common::init_oso();
     let authz = OsoAuthorization::new(o, |req, oso| async move {
         if oso
             .is_allowed(
-                User {
+                common::User {
                     name: "not alice".to_string(),
                 },
                 "action",

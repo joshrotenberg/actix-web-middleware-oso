@@ -1,3 +1,5 @@
+//! Extractor for Oso
+
 use std::borrow::Borrow;
 use std::ops::Deref;
 
@@ -7,7 +9,7 @@ use actix_web::Result;
 use actix_web::{dev::Payload, Error, FromRequest, HttpMessage, HttpRequest};
 use oso::Oso;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct ExtractedOso(pub Oso);
 
 impl Deref for ExtractedOso {
@@ -25,7 +27,7 @@ impl FromRequest for ExtractedOso {
         if let Some(oso) = req.extensions().get::<ExtractedOso>() {
             ready(Ok(oso.borrow().clone()))
         } else {
-            ready(Err(ErrorBadRequest("no oso")))
+            ready(Err(ErrorBadRequest("No Oso could be extracted")))
         }
     }
 }
