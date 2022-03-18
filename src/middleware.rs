@@ -14,7 +14,7 @@ use oso::Oso;
 
 /// Middleware for Oso authorization
 pub struct OsoMiddleware<F> {
-    oso: Arc<Oso>,
+    oso: Rc<Oso>,
     authorize_fn: Arc<F>,
 }
 
@@ -49,7 +49,7 @@ where
     /// ```
     pub fn new(oso: Oso, authorize_fn: F) -> OsoMiddleware<F> {
         OsoMiddleware {
-            oso: Arc::new(oso),
+            oso: Rc::new(oso),
             authorize_fn: Arc::new(authorize_fn),
         }
     }
@@ -81,7 +81,7 @@ where
 #[doc(hidden)]
 pub struct OsoMiddlewareInner<S, F> {
     service: Rc<S>,
-    oso: Arc<Oso>,
+    oso: Rc<Oso>,
     authorize_fn: Arc<F>,
 }
 
@@ -101,7 +101,7 @@ where
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let authorize_fn = Arc::clone(&self.authorize_fn);
-        let oso = Arc::clone(&self.oso);
+        let oso = Rc::clone(&self.oso);
         let service = Rc::clone(&self.service);
 
         async move {
@@ -130,7 +130,7 @@ mod tests {
                 Ok::<ServiceResponse, _>(req.into_response(HttpResponse::Ok().finish()))
             })),
             authorize_fn: Arc::new(|req, _oso| async { Ok(req) }),
-            oso: Arc::new(oso),
+            oso: Rc::new(oso),
         };
 
         let req = TestRequest::get().to_srv_request();
@@ -151,7 +151,7 @@ mod tests {
             authorize_fn: Arc::new(|_req, _oso| async {
                 Err(error::ErrorUnauthorized("none shall pass"))
             }),
-            oso: Arc::new(oso),
+            oso: Rc::new(oso),
         };
 
         let req = TestRequest::get().app_data(Oso::new()).to_srv_request();
