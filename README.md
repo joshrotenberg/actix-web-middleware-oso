@@ -35,7 +35,7 @@ async fn authorize(req: ServiceRequest, oso: Oso) -> Result<ServiceRequest, Erro
 }
 ```
 
-Initialize Oso and the middleware, and add it to your actix `App` with wrap.
+Initialize Oso and the middleware, and add it to your actix `App` with `wrap`.
 
 ```rust
 #[actix_web::main]
