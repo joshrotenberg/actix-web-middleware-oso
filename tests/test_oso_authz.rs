@@ -1,6 +1,6 @@
 use actix_web::{test, web, App, HttpResponse, Responder};
 
-use actix_web_middleware_oso::middleware::OsoAuthorization;
+use actix_web_middleware_oso::middleware::OsoMiddleware;
 
 mod common;
 
@@ -11,7 +11,7 @@ async fn hello() -> impl Responder {
 #[actix_web::test]
 async fn test_oso_authz_success() {
     let o = common::init_oso();
-    let authz = OsoAuthorization::new(o, |req, oso| async move {
+    let authz = OsoMiddleware::new(o, |req, oso| async move {
         let user = common::User {
             name: "alice".to_string(),
         };
@@ -33,7 +33,7 @@ async fn test_oso_authz_success() {
 #[should_panic]
 async fn test_oso_authz_failure() {
     let o = common::init_oso();
-    let authz = OsoAuthorization::new(o, |req, oso| async move {
+    let authz = OsoMiddleware::new(o, |req, oso| async move {
         if oso
             .is_allowed(
                 common::User {

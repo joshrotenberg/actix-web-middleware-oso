@@ -5,7 +5,7 @@ use actix_web::{
 };
 use oso::Oso;
 
-use actix_web_middleware_oso::{extractor::ExtractedOso, middleware::OsoAuthorization};
+use actix_web_middleware_oso::{extractor::ExtractedOso, middleware::OsoMiddleware};
 
 async fn authorize(req: ServiceRequest, oso: Oso) -> Result<ServiceRequest, Error> {
     let action = req.method().to_string().to_uppercase();
@@ -47,7 +47,7 @@ async fn main() -> std::io::Result<()> {
         )
         .unwrap();
 
-        let authz = OsoAuthorization::new(oso, authorize);
+        let authz = OsoMiddleware::new(oso, authorize);
         App::new()
             .wrap(middleware::Logger::default())
             .wrap(authz)

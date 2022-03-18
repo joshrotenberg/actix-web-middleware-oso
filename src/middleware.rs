@@ -1,26 +1,27 @@
 //! Oso Authorization middleware
 
-use actix_web::Result;
+use std::{future::Future, rc::Rc, sync::Arc};
+use std::ops::Deref;
+
 use actix_web::{
     body::{EitherBody, MessageBody},
     dev::{Service, ServiceRequest, ServiceResponse, Transform},
     Error, HttpMessage,
 };
+use actix_web::Result;
 use futures_util::future::{self, FutureExt as _, LocalBoxFuture};
 use oso::Oso;
-use std::ops::Deref;
-use std::{future::Future, rc::Rc, sync::Arc};
 
 /// Middleware for Oso authorization
-pub struct OsoAuthorization<F> {
+pub struct OsoMiddleware<F> {
     oso: Arc<Oso>,
     authorize_fn: Arc<F>,
 }
 
-impl<F, O> OsoAuthorization<F>
-where
-    F: Fn(ServiceRequest, Oso) -> O,
-    O: Future<Output = Result<ServiceRequest, Error>>,
+impl<F, O> OsoMiddleware<F>
+    where
+        F: Fn(ServiceRequest, Oso) -> O,
+        O: Future<Output=Result<ServiceRequest, Error>>,
 {
     /// Create a new `OsoAuthorization`, passing in an initialized handle to Oso and a callback.
     /// `authorize_fn` will be called with the `ServiceRequest` and `Oso`.
@@ -31,7 +32,7 @@ where
     /// # use actix_web::dev::ServiceRequest;
     /// # use actix_web::error::ErrorUnauthorized;
     /// # use oso::Oso;
-    /// # use actix_web_middleware_oso::middleware::OsoAuthorization;
+    /// # use actix_web_middleware_oso::middleware::OsoMiddleware;
     ///
     /// async fn authorize(req: ServiceRequest, oso: Oso) -> Result<ServiceRequest, Error> {
     ///    let action = req.method().to_string().to_uppercase();
@@ -44,32 +45,32 @@ where
     ///
     /// let mut oso = Oso::new();
     /// oso.load_str(r#"allow(_actor, action, _resource) if action = "GET");"#);
-    /// let authz = OsoAuthorization::new(oso, authorize);
+    /// let authz = OsoMiddleware::new(oso, authorize);
     /// ```
-    pub fn new(oso: Oso, authorize_fn: F) -> OsoAuthorization<F> {
-        OsoAuthorization {
+    pub fn new(oso: Oso, authorize_fn: F) -> OsoMiddleware<F> {
+        OsoMiddleware {
             oso: Arc::new(oso),
             authorize_fn: Arc::new(authorize_fn),
         }
     }
 }
 
-impl<S, B, F, O> Transform<S, ServiceRequest> for OsoAuthorization<F>
-where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
-    S::Future: 'static,
-    F: Fn(ServiceRequest, Oso) -> O + 'static,
-    O: Future<Output = Result<ServiceRequest, Error>> + 'static,
-    B: MessageBody + 'static,
+impl<S, B, F, O> Transform<S, ServiceRequest> for OsoMiddleware<F>
+    where
+        S: Service<ServiceRequest, Response=ServiceResponse<B>, Error=Error> + 'static,
+        S::Future: 'static,
+        F: Fn(ServiceRequest, Oso) -> O + 'static,
+        O: Future<Output=Result<ServiceRequest, Error>> + 'static,
+        B: MessageBody + 'static,
 {
     type Response = ServiceResponse<EitherBody<B>>;
     type Error = Error;
-    type Transform = OsoAuthorizationMiddleware<S, F>;
+    type Transform = OsoMiddlewareInner<S, F>;
     type InitError = ();
     type Future = future::Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        future::ok(OsoAuthorizationMiddleware {
+        future::ok(OsoMiddlewareInner {
             service: Rc::new(service),
             oso: self.oso.clone(),
             authorize_fn: self.authorize_fn.clone(),
@@ -77,19 +78,20 @@ where
     }
 }
 
-pub struct OsoAuthorizationMiddleware<S, F> {
+#[doc(hidden)]
+pub struct OsoMiddlewareInner<S, F> {
     service: Rc<S>,
     oso: Arc<Oso>,
     authorize_fn: Arc<F>,
 }
 
-impl<S, B, F, O> Service<ServiceRequest> for OsoAuthorizationMiddleware<S, F>
-where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
-    F: Fn(ServiceRequest, Oso) -> O + 'static,
-    O: Future<Output = Result<ServiceRequest, Error>> + 'static,
-    S::Future: 'static,
-    B: MessageBody + 'static,
+impl<S, B, F, O> Service<ServiceRequest> for OsoMiddlewareInner<S, F>
+    where
+        S: Service<ServiceRequest, Response=ServiceResponse<B>, Error=Error> + 'static,
+        F: Fn(ServiceRequest, Oso) -> O + 'static,
+        O: Future<Output=Result<ServiceRequest, Error>> + 'static,
+        S::Future: 'static,
+        B: MessageBody + 'static,
 {
     type Response = ServiceResponse<EitherBody<B>>;
     type Error = Error;
@@ -108,22 +110,22 @@ where
             let req = authorize_fn(req, oso.deref().clone()).await?;
             service.call(req).await.map(|res| res.map_into_left_body())
         }
-        .boxed_local()
+            .boxed_local()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use actix_service::{into_service, Service};
-    use actix_web::test::TestRequest;
     use actix_web::{error, HttpResponse};
+    use actix_web::test::TestRequest;
 
     use super::*;
 
     #[actix_rt::test]
     async fn test_oso_middleware_is_ok() {
         let oso = Oso::new();
-        let middleware = OsoAuthorizationMiddleware {
+        let middleware = OsoMiddlewareInner {
             service: Rc::new(into_service(|req: ServiceRequest| async move {
                 Ok::<ServiceResponse, _>(req.into_response(HttpResponse::Ok().finish()))
             })),
@@ -142,7 +144,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_oso_middleware_is_not_ok() {
         let oso = Oso::new();
-        let middleware = OsoAuthorizationMiddleware {
+        let middleware = OsoMiddlewareInner {
             service: Rc::new(into_service(|req: ServiceRequest| async move {
                 Ok::<ServiceResponse, _>(req.into_response(HttpResponse::Ok().finish()))
             })),
