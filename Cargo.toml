@@ -7,6 +7,7 @@ version = "0.1.0"
 readme = "README.md"
 documentation = "https://docs.rs/actix-web-middleware-oso"
 repository = "https://github.com/joshrotenberg/actix-web-middleware-oso.git"
+keywords = ["actix", "web", "oso", "middleware", "authorization"]
 edition = "2021"
 
 [lib]
